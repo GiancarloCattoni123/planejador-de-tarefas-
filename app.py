@@ -22,7 +22,6 @@ WINDOW_SIZE    = 5
 USERS_FILE     = os.path.join(os.path.dirname(__file__), "users.json")
 DATA_DIR       = os.path.join(os.path.dirname(__file__), "userdata")
 
-os.environ["ANTHROPIC_API_KEY"] = "sk-ant-sua-chave-aqui"
 
 os.makedirs(DATA_DIR, exist_ok=True)
 
