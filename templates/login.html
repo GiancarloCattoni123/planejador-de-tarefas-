@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planejador — Entrar</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body class="auth-page">
+    <div class="auth-card">
+        <div class="auth-icon">🗓️</div>
+        <h1>Planejador de Tarefas</h1>
+
+        <div class="auth-tabs">
+            <button id="tab-login" class="tab active" onclick="trocarAba('login')">Entrar</button>
+            <button id="tab-cadastro" class="tab" onclick="trocarAba('cadastro')">Criar conta</button>
+        </div>
+
+        <div id="form-login">
+            <div class="field">
+                <label>Usuário</label>
+                <input type="text" id="login-user" placeholder="seu nome">
+            </div>
+            <div class="field">
+                <label>Senha</label>
+                <input type="password" id="login-pass" placeholder="••••">
+            </div>
+            <span id="login-erro" class="auth-erro hidden"></span>
+            <button class="btn-primary" onclick="fazerLogin()">Entrar</button>
+        </div>
+
+        <div id="form-cadastro" class="hidden">
+            <div class="field">
+                <label>Escolha um nome</label>
+                <input type="text" id="cad-user" placeholder="ex: maria">
+            </div>
+            <div class="field">
+                <label>Crie uma senha</label>
+                <input type="password" id="cad-pass" placeholder="mínimo 4 caracteres">
+            </div>
+            <div class="field">
+                <label>Repita a senha</label>
+                <input type="password" id="cad-conf" placeholder="••••">
+            </div>
+            <span id="cad-erro" class="auth-erro hidden"></span>
+            <button class="btn-primary" onclick="fazerCadastro()">Criar conta</button>
+        </div>
+    </div>
+
+    <script>
+        function trocarAba(aba) {
+            document.getElementById("form-login").classList.toggle("hidden", aba !== "login");
+            document.getElementById("form-cadastro").classList.toggle("hidden", aba !== "cadastro");
+            document.getElementById("tab-login").classList.toggle("active", aba === "login");
+            document.getElementById("tab-cadastro").classList.toggle("active", aba === "cadastro");
+        }
+
+        async function fazerLogin() {
+            const username = document.getElementById("login-user").value.trim();
+            const password = document.getElementById("login-pass").value.trim();
+            const erro = document.getElementById("login-erro");
+            erro.classList.add("hidden");
+
+            const res = await fetch("/api/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await res.json();
+
+            if (data.ok) {
+                window.location.href = "/";
+            } else {
+                erro.textContent = data.error;
+                erro.classList.remove("hidden");
+            }
+        }
+
+        async function fazerCadastro() {
+            const username = document.getElementById("cad-user").value.trim();
+            const password = document.getElementById("cad-pass").value.trim();
+            const confirm = document.getElementById("cad-conf").value.trim();
+            const erro = document.getElementById("cad-erro");
+            erro.classList.add("hidden");
+
+            const res = await fetch("/api/cadastro", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username, password, confirm })
+            });
+            const data = await res.json();
+
+            if (data.ok) {
+                window.location.href = "/";
+            } else {
+                erro.textContent = data.error;
+                erro.classList.remove("hidden");
+            }
+        }
+
+        document.addEventListener("keydown", e => {
+            if (e.key !== "Enter") return;
+            const cadastroVisivel = !document.getElementById("form-cadastro").classList.contains("hidden");
+            cadastroVisivel ? fazerCadastro() : fazerLogin();
+        });
+    </script>
+</body>
+
+</html>

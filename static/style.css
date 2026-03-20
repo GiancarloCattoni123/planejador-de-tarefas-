@@ -1,0 +1,474 @@
+/* ── RESET E BASE ──────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --border: #2e3140;
+    --text: #e2e4ed;
+    --muted: #6b7280;
+    --accent: #6366f1;
+    --accent-h: #4f52d4;
+    --user-bg: #1e2235;
+    --bot-bg: #141720;
+    --danger: #ef4444;
+    --radius: 12px;
+    --font: system-ui, -apple-system, sans-serif;
+}
+
+body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* ── TELA DE LOGIN ─────────────────────────────────────────── */
+body.auth-page {
+    align-items: center;
+    justify-content: center;
+    overflow: auto;
+}
+
+.auth-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px 36px;
+    max-width: 420px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    text-align: center;
+}
+
+.auth-icon {
+    font-size: 3rem;
+}
+
+.auth-card h1 {
+    font-size: 1.4rem;
+    font-weight: 600;
+}
+
+.auth-tabs {
+    display: flex;
+    background: var(--bg);
+    border-radius: var(--radius);
+    padding: 4px;
+    gap: 4px;
+}
+
+.tab {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    padding: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: .9rem;
+    transition: background .2s, color .2s;
+}
+
+.tab.active {
+    background: var(--surface);
+    color: var(--text);
+    font-weight: 500;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    text-align: left;
+}
+
+.field label {
+    font-size: .85rem;
+    color: var(--muted);
+    font-weight: 500;
+}
+
+.field input {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    font-size: .95rem;
+    outline: none;
+    transition: border-color .2s;
+    width: 100%;
+}
+
+.field input:focus {
+    border-color: var(--accent);
+}
+
+.field input::placeholder {
+    color: var(--muted);
+}
+
+.auth-erro {
+    color: var(--danger);
+    font-size: .85rem;
+    text-align: left;
+}
+
+.btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    padding: 13px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background .2s;
+    width: 100%;
+    margin-top: 4px;
+}
+
+.btn-primary:hover {
+    background: var(--accent-h);
+}
+
+/* ── HEADER COM USUÁRIO E LOGOUT ───────────────────────────── */
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+#header-user {
+    font-size: .85rem;
+    color: var(--muted);
+}
+
+.btn-logout {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 6px 14px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: .85rem;
+    transition: color .2s, border-color .2s;
+}
+
+.btn-logout:hover {
+    color: var(--danger);
+    border-color: var(--danger);
+}
+
+/* ── APP SCREEN ────────────────────────────────────────────── */
+#app-screen {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* ── CABEÇALHO ─────────────────────────────────────────────── */
+header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+header h1 {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+header button {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 6px 14px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: .85rem;
+    transition: color .2s, border-color .2s;
+}
+
+header button:hover {
+    color: var(--text);
+    border-color: var(--accent);
+}
+
+/* ── CONFIGURAÇÕES ─────────────────────────────────────────── */
+#config-panel {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 20px;
+    display: flex;
+    gap: 24px;
+    align-items: center;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+}
+
+#config-panel label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: .9rem;
+    cursor: pointer;
+    color: var(--muted);
+}
+
+#config-panel label:hover {
+    color: var(--text);
+}
+
+#config-panel input[type="checkbox"] {
+    accent-color: var(--accent);
+    width: 16px;
+    height: 16px;
+}
+
+/* ── LAYOUT PRINCIPAL ──────────────────────────────────────── */
+main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* ── CHAT ──────────────────────────────────────────────────── */
+#chat-area {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+    padding: 16px;
+    gap: 12px;
+}
+
+#messages {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-right: 4px;
+}
+
+#messages::-webkit-scrollbar {
+    width: 4px;
+}
+
+#messages::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+}
+
+.message {
+    max-width: 75%;
+    padding: 10px 14px;
+    border-radius: var(--radius);
+    font-size: .95rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.message.user {
+    background: var(--user-bg);
+    border: 1px solid var(--border);
+    align-self: flex-end;
+}
+
+.message.assistant {
+    background: var(--bot-bg);
+    border: 1px solid var(--border);
+    align-self: flex-start;
+}
+
+.message.loading {
+    color: var(--muted);
+    font-style: italic;
+}
+
+/* ── TOKENS ────────────────────────────────────────────────── */
+#token-bar {
+    font-size: .78rem;
+    color: var(--muted);
+    text-align: center;
+    padding: 4px 0;
+}
+
+#token-bar span {
+    color: var(--text);
+    font-weight: 500;
+}
+
+/* ── INPUT ─────────────────────────────────────────────────── */
+#input-area {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+}
+
+#user-input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    font-size: .95rem;
+    font-family: var(--font);
+    resize: none;
+    max-height: 140px;
+    outline: none;
+    transition: border-color .2s;
+    line-height: 1.5;
+}
+
+#user-input:focus {
+    border-color: var(--accent);
+}
+
+#user-input::placeholder {
+    color: var(--muted);
+}
+
+#input-area button {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    padding: 10px 20px;
+    font-size: .95rem;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background .2s;
+    white-space: nowrap;
+}
+
+#input-area button:hover {
+    background: var(--accent-h);
+}
+
+/* ── BOTÕES DANGER ─────────────────────────────────────────── */
+button.danger {
+    background: transparent;
+    border: 1px solid var(--danger);
+    color: var(--danger);
+    border-radius: var(--radius);
+    padding: 8px 16px;
+    font-size: .85rem;
+    cursor: pointer;
+    transition: background .2s;
+}
+
+button.danger:hover {
+    background: rgba(239, 68, 68, .1);
+}
+
+button.danger.small {
+    padding: 5px 12px;
+    font-size: .8rem;
+}
+
+/* ── PAINEL DE TAREFAS ─────────────────────────────────────── */
+#tasks-panel {
+    width: 300px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    padding: 20px 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+#tasks-panel h2 {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+#tasks-panel h3 {
+    font-size: .85rem;
+    color: var(--muted);
+    font-weight: 500;
+}
+
+#tasks-panel ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+#tasks-panel li {
+    font-size: .9rem;
+    padding: 8px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    line-height: 1.4;
+}
+
+.time {
+    color: var(--accent);
+    font-size: .8rem;
+    font-weight: 500;
+}
+
+.empty-msg {
+    font-size: .85rem;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.6;
+    padding: 20px 0;
+}
+
+/* ── UTILITÁRIO ────────────────────────────────────────────── */
+.hidden {
+    display: none !important;
+}
+
+/* ── MOBILE ────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+    main {
+        flex-direction: column;
+    }
+
+    #tasks-panel {
+        width: 100%;
+        border-left: none;
+        border-top: 1px solid var(--border);
+        max-height: 220px;
+    }
+
+    .message {
+        max-width: 90%;
+    }
+
+    #config-panel {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    #setup-card {
+        padding: 32px 24px;
+    }
+}

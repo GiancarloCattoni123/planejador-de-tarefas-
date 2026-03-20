@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planejador de Tarefas</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <div id="app-screen">
+
+        <header>
+            <h1>🗓️ Planejador de Tarefas</h1>
+            <div class="header-right">
+                <span id="header-user"></span>
+                <button id="btn-config" onclick="toggleConfig()">⚙️ Configurações</button>
+                <button class="btn-logout" onclick="fazerLogout()">Sair</button>
+            </div>
+        </header>
+
+        <div id="config-panel" class="hidden">
+            <label>
+                <input type="checkbox" id="toggle-tokens" onchange="saveConfig()">
+                Mostrar contador de tokens
+            </label>
+            <label>
+                <input type="checkbox" id="toggle-clear" onchange="saveConfig()">
+                Mostrar botão "Limpar conversa"
+            </label>
+        </div>
+
+        <main>
+            <section id="chat-area">
+                <div id="messages"></div>
+
+                <div id="token-bar" class="hidden">
+                    entrada: <span id="tok-in">0</span> |
+                    saída: <span id="tok-out">0</span> |
+                    acumulado: <span id="tok-total">0</span>
+                </div>
+
+                <div id="input-area">
+                    <textarea id="user-input" placeholder="Digite sua tarefa ou pergunta..." rows="1"
+                        onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+                    <button onclick="sendMessage()">Enviar</button>
+                </div>
+
+                <button id="btn-clear" class="hidden danger" onclick="clearChat()">
+                    🗑️ Limpar conversa
+                </button>
+            </section>
+
+            <aside id="tasks-panel">
+                <h2>📋 Tarefas do dia</h2>
+                <div id="tasks-pending">
+                    <p class="empty-msg">Nenhuma tarefa ainda.<br>Diga algo como<br>"adicionar reunião às 10h"</p>
+                </div>
+                <div id="tasks-done" class="hidden">
+                    <h3>Concluídas</h3>
+                    <ul id="list-done"></ul>
+                </div>
+            </aside>
+        </main>
+
+    </div>
+
+    <script>
+        // ── LOGOUT ─────────────────────────────────────────────────
+        async function fazerLogout() {
+            await fetch("/api/logout", { method: "POST" });
+            window.location.href = "/login";
+        }
+
+        // ── INICIALIZAÇÃO ──────────────────────────────────────────
+        // Carrega o estado salvo do usuário ao abrir o app
+        document.addEventListener("DOMContentLoaded", async () => {
+            loadConfig();
+            const res = await fetch("/api/estado");
+            const data = await res.json();
+
+            document.getElementById("header-user").textContent = "👤 " + data.username;
+
+            // Restaura mensagens anteriores
+            data.messages.forEach(m => {
+                if (m.role === "assistant") {
+                    try {
+                        const parsed = JSON.parse(m.content);
+                        appendMessage("assistant", parsed.reply || m.content);
+                    } catch { appendMessage("assistant", m.content); }
+                } else {
+                    appendMessage("user", m.content);
+                }
+            });
+
+            // Restaura tarefas e tokens
+            if (data.tasks.length > 0) renderTasks(data.tasks);
+            document.getElementById("tok-total").textContent = data.tokens.total;
+        });
+
+        // ── CONFIGURAÇÕES ──────────────────────────────────────────
+        function saveConfig() {
+            const showTokens = document.getElementById("toggle-tokens").checked;
+            const showClear = document.getElementById("toggle-clear").checked;
+            localStorage.setItem("showTokens", showTokens);
+            localStorage.setItem("showClear", showClear);
+            document.getElementById("token-bar").classList.toggle("hidden", !showTokens);
+            document.getElementById("btn-clear").classList.toggle("hidden", !showClear);
+        }
+
+        function loadConfig() {
+            const showTokens = localStorage.getItem("showTokens") === "true";
+            const showClear = localStorage.getItem("showClear") === "true";
+            document.getElementById("toggle-tokens").checked = showTokens;
+            document.getElementById("toggle-clear").checked = showClear;
+            document.getElementById("token-bar").classList.toggle("hidden", !showTokens);
+            document.getElementById("btn-clear").classList.toggle("hidden", !showClear);
+        }
+
+        function toggleConfig() {
+            document.getElementById("config-panel").classList.toggle("hidden");
+        }
+
+        // ── ENVIO DE MENSAGEM ──────────────────────────────────────
+        async function sendMessage() {
+            const input = document.getElementById("user-input");
+            const text = input.value.trim();
+            if (!text) return;
+
+            appendMessage("user", text);
+            input.value = "";
+            autoResize(input);
+
+            const loadingId = appendMessage("assistant", "⏳ Pensando...", true);
+
+            try {
+                const res = await fetch("/api/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ message: text })
+                });
+                const data = await res.json();
+                removeMessage(loadingId);
+
+                if (data.error) { appendMessage("assistant", `❌ ${data.error}`); return; }
+
+                appendMessage("assistant", data.reply);
+                renderTasks(data.tasks);
+                updateTokens(data.tokens);
+            } catch {
+                removeMessage(loadingId);
+                appendMessage("assistant", "❌ Erro de conexão.");
+            }
+        }
+
+        function handleKey(e) {
+            if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+        }
+
+        // ── CHAT ───────────────────────────────────────────────────
+        let msgCounter = 0;
+
+        function appendMessage(role, text, isTemp = false) {
+            const id = "msg-" + (++msgCounter);
+            const div = document.createElement("div");
+            div.id = id;
+            div.className = `message ${role}${isTemp ? " loading" : ""}`;
+            div.textContent = text;
+            document.getElementById("messages").appendChild(div);
+            div.scrollIntoView({ behavior: "smooth" });
+            return id;
+        }
+
+        function removeMessage(id) { document.getElementById(id)?.remove(); }
+
+        // ── TAREFAS ────────────────────────────────────────────────
+        function renderTasks(tasks) {
+            const pending = tasks.filter(t => !t.done);
+            const done = tasks.filter(t => t.done);
+            const pendingEl = document.getElementById("tasks-pending");
+            const doneEl = document.getElementById("tasks-done");
+
+            pendingEl.innerHTML = pending.length === 0
+                ? '<p class="empty-msg">Nenhuma tarefa pendente.</p>'
+                : "";
+
+            if (pending.length > 0) {
+                const ul = document.createElement("ul");
+                pending.forEach(t => {
+                    const li = document.createElement("li");
+                    li.innerHTML = `⬜ ${t.time ? `<span class="time">[${t.time}]</span> ` : ""}${t.name}`;
+                    ul.appendChild(li);
+                });
+                pendingEl.appendChild(ul);
+            }
+
+            if (done.length === 0) {
+                doneEl.classList.add("hidden");
+            } else {
+                doneEl.classList.remove("hidden");
+                const listDone = document.getElementById("list-done");
+                listDone.innerHTML = "";
+                done.forEach(t => {
+                    const li = document.createElement("li");
+                    li.innerHTML = `✅ ${t.time ? `<span class="time">[${t.time}]</span> ` : ""}${t.name}`;
+                    listDone.appendChild(li);
+                });
+            }
+        }
+
+        function updateTokens(tokens) {
+            document.getElementById("tok-in").textContent = tokens.input;
+            document.getElementById("tok-out").textContent = tokens.output;
+            document.getElementById("tok-total").textContent = tokens.total;
+        }
+
+        // ── LIMPAR CONVERSA ────────────────────────────────────────
+        async function clearChat() {
+            if (!confirm("Limpar toda a conversa e tarefas?")) return;
+            await fetch("/api/clear", { method: "POST" });
+            document.getElementById("messages").innerHTML = "";
+            document.getElementById("tasks-pending").innerHTML = '<p class="empty-msg">Nenhuma tarefa ainda.</p>';
+            document.getElementById("tasks-done").classList.add("hidden");
+            ["tok-in", "tok-out", "tok-total"].forEach(id => document.getElementById(id).textContent = "0");
+        }
+
+        function autoResize(el) {
+            el.style.height = "auto";
+            el.style.height = el.scrollHeight + "px";
+        }
+    </script>
+</body>
+
+</html>
