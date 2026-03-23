@@ -117,16 +117,28 @@ def update_state(action: dict, tasks: list) -> str | None:
         tasks.append(Task(a_task, a_time))
 
     elif a_type == "complete" and a_task:
-        for t in tasks:
-            if a_task.lower() in t.name.lower():
-                t.done = True
-                return None
+        # Tenta correspondência exata primeiro, depois parcial
+        alvo = next((t for t in tasks if t.name.lower() == a_task.lower()), None)
+        if not alvo:
+            alvo = next((t for t in tasks if a_task.lower() in t.name.lower()), None)
+        if alvo:
+            alvo.done = True
+            return None
         return f"Tarefa '{a_task}' não encontrada."
 
     elif a_type == "remove" and a_task:
-        before   = len(tasks)
-        tasks[:] = [t for t in tasks if a_task.lower() not in t.name.lower()]
-        if len(tasks) == before:
-            return f"Tarefa '{a_task}' não encontrada."
+        # Tenta correspondência exata primeiro, depois parcial
+        alvo = next((t for t in tasks if t.name.lower() == a_task.lower()), None)
+        if not alvo:
+            # Parcial só se houver exatamente UMA correspondência
+            parciais = [t for t in tasks if a_task.lower() in t.name.lower()]
+            if len(parciais) == 1:
+                alvo = parciais[0]
+            elif len(parciais) > 1:
+                return f"Mais de uma tarefa encontrada para '{a_task}'. Seja mais específico."
+        if alvo:
+            tasks.remove(alvo)
+            return None
+        return f"Tarefa '{a_task}' não encontrada."
 
     return None
