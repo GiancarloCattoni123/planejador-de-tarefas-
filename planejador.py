@@ -12,7 +12,7 @@ import re
 import anthropic
 from datetime import datetime
 
-MODEL      = "claude-sonnet-4-6"
+MODEL      = "claude-haiku-4-5-20251001"
 MAX_TOKENS = 1024
 
 SYSTEM_PROMPT = """Você é um assistente de planejamento de tarefas diárias, simpático e objetivo.
@@ -44,7 +44,8 @@ FORMATO DE RESPOSTA — SEMPRE responda em JSON válido com exatamente esta estr
 REGRAS DE reply:
 - "add"      → "Tarefa '[nome]' adicionada com sucesso!"
 - "complete" → "Tarefa '[nome]' marcada como concluída!"
-- "remove"   → "Tarefa '[nome]' removida com sucesso!"
+- "remove"   → use para remover UMA tarefa específica. Para remover várias, use "remove_many"
+- "remove_many" → quando o usuário confirmar remover múltiplas tarefas. O campo "task" deve ser uma lista separada por vírgula com os nomes exatos. Ex: "Lavar roupa, Lavar a louça"
 - "list"     → liste as tarefas de forma amigável
 - "none"     → responda apenas sobre organização de tarefas e agenda
 
@@ -107,6 +108,16 @@ def parse_response(text: str) -> tuple[str, dict]:
         return text, action
 
 
+def _encontrar_tarefa(tasks: list, nome: str):
+    """Busca exata primeiro, parcial só se única correspondência."""
+    alvo = next((t for t in tasks if t.name.lower() == nome.lower()), None)
+    if not alvo:
+        parciais = [t for t in tasks if nome.lower() in t.name.lower()]
+        if len(parciais) == 1:
+            alvo = parciais[0]
+    return alvo
+
+
 def update_state(action: dict, tasks: list) -> str | None:
     """Aplica a ação na lista de tarefas."""
     a_type = action.get("type", "none")
@@ -117,28 +128,32 @@ def update_state(action: dict, tasks: list) -> str | None:
         tasks.append(Task(a_task, a_time))
 
     elif a_type == "complete" and a_task:
-        # Tenta correspondência exata primeiro, depois parcial
-        alvo = next((t for t in tasks if t.name.lower() == a_task.lower()), None)
-        if not alvo:
-            alvo = next((t for t in tasks if a_task.lower() in t.name.lower()), None)
+        alvo = _encontrar_tarefa(tasks, a_task)
         if alvo:
             alvo.done = True
             return None
         return f"Tarefa '{a_task}' não encontrada."
 
     elif a_type == "remove" and a_task:
-        # Tenta correspondência exata primeiro, depois parcial
-        alvo = next((t for t in tasks if t.name.lower() == a_task.lower()), None)
-        if not alvo:
-            # Parcial só se houver exatamente UMA correspondência
-            parciais = [t for t in tasks if a_task.lower() in t.name.lower()]
-            if len(parciais) == 1:
-                alvo = parciais[0]
-            elif len(parciais) > 1:
-                return f"Mais de uma tarefa encontrada para '{a_task}'. Seja mais específico."
+        parciais = [t for t in tasks if a_task.lower() in t.name.lower()]
+        if len(parciais) > 1:
+            return f"Mais de uma tarefa encontrada. Seja mais específico."
+        alvo = _encontrar_tarefa(tasks, a_task)
         if alvo:
             tasks.remove(alvo)
             return None
         return f"Tarefa '{a_task}' não encontrada."
+
+    elif a_type == "remove_many" and a_task:
+        # Remove lista de tarefas separadas por vírgula
+        nomes   = [n.strip() for n in a_task.split(",")]
+        removidas = []
+        for nome in nomes:
+            alvo = _encontrar_tarefa(tasks, nome)
+            if alvo:
+                tasks.remove(alvo)
+                removidas.append(nome)
+        if not removidas:
+            return "Nenhuma tarefa encontrada para remover."
 
     return None
