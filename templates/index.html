@@ -83,11 +83,12 @@
 
             document.getElementById("header-user").textContent = "👤 " + data.username;
 
-            // Restaura mensagens anteriores
+            // Restaura mensagens anteriores — exibe só o reply, nunca o JSON cru
             data.messages.forEach(m => {
                 if (m.role === "assistant") {
                     try {
-                        const parsed = JSON.parse(m.content);
+                        const clean = m.content.replace(/```json|```/g, "").trim();
+                        const parsed = JSON.parse(clean);
                         appendMessage("assistant", parsed.reply || m.content);
                     } catch { appendMessage("assistant", m.content); }
                 } else {
